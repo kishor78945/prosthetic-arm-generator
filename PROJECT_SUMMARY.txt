@@ -1,0 +1,195 @@
+================================================================================
+        PARAMETRIC PROSTHETIC ARM GENERATOR — PROJECT SUMMARY
+================================================================================
+
+1. WHAT THIS PROJECT DOES
+-------------------------
+This software automatically designs a custom prosthetic arm (below-elbow type)
+from patient measurements. A doctor/prosthetist enters limb dimensions into a
+web app, and the system generates a complete 3D-printable prosthetic arm —
+socket, forearm tube, and articulated hand with five fingers.
+
+    Measure Patient -> Enter Data -> Auto-Generate 3D Model -> Download & Print
+
+
+2. THE PROBLEM IT SOLVES
+------------------------
+Traditional prosthetic design requires:
+  - Expensive proprietary CAD software
+  - Skilled technicians with years of training
+  - Multiple fitting appointments
+  - Days to weeks of turnaround
+
+This project reduces that to:
+  - Free, browser-based tool (no software install)
+  - Automated design from measurements (minutes, not days)
+  - Print-ready output files (STL for 3D printing, STEP for CAD editing)
+  - Reproducible results (same input = same output, every time)
+
+
+3. PROJECT STRUCTURE
+--------------------
+prosthetic_gen/
+├── measurement_input/       Phase 1 — Patient data & validation
+│   ├── schema.py            Pydantic data model (StumpMeasurements)
+│   └── normalizer.py        Outlier detection, consistency checks
+│
+├── parametric_engine/       Phase 2 — CAD geometry generation
+│   ├── constraints.py       Design constraints & parameters
+│   ├── profile_generator.py Elliptical cross-section profiles
+│   ├── socket_generator.py  Patient-fitted inner socket
+│   ├── forearm_generator.py Hollow forearm tube with ulnar ridge
+│   ├── hand_generator.py    Palm, 4 fingers, thumb with thenar pad
+│   ├── assembler.py         Combines all components
+│   └── exporter.py          STL / STEP / GLB export
+│
+├── postprocessing/          Phase 3 — Mesh refinement
+│   ├── mesh_postprocessor.py  Subdivision, normals, decimation
+│   └── validator.py           Wall thickness & watertight checks
+│
+├── texture_synthesis/       Phase 3 — Material textures
+│   └── texturizer.py        Skin / Metallic / Plastic / Carbon Fiber
+│
+├── interface/               Phase 5 — Web application
+│   ├── api.py               FastAPI backend (REST API)
+│   ├── gradio_app.py        Alternative Gradio UI
+│   └── webapp/
+│       └── index.html       Unified single-page web app frontend
+│
+└── tests/                   Unit tests
+
+
+4. HOW IT WORKS — THE PIPELINE
+------------------------------
+
+PHASE 1: MEASUREMENT INPUT & VALIDATION
+  - Patient measurements entered via web form or API:
+    * Residual limb length (mm)
+    * Circumferences at 5 stations (0%, 25%, 50%, 75%, 100%)
+    * Elliptical cross-section diameters at 3 stations
+    * Load-sensitive anatomical zones (olecranon, epicondyles, etc.)
+  - Validation checks:
+    * Z-score outlier detection against population statistics
+    * Taper monotonicity (circumferences should decrease toward tip)
+    * Diameter-circumference consistency
+    * Cross-section eccentricity flagging
+
+PHASE 2: PARAMETRIC GEOMETRY ENGINE
+  - Socket: Continuous loft through elliptical profiles from patient data,
+    with wall thickness relief at load zones, liner gap, and distal cap.
+  - Forearm: 5-station elliptical loft (width:depth ratio 1.25:1),
+    smooth S-curve taper, bounded ulnar ridge (Gaussian, max 3mm),
+    proximal flange, and distal wrist connector.
+  - Hand: Lofted palm with dorsal arch, thenar eminence (thumb base pad),
+    metacarpal bridge, 4 fingers (3 phalanges each with joint widening
+    and hemispherical tips), and 2-segment thumb originating inside
+    the palm body for proper geometric attachment.
+  - All geometry built with CadQuery (Python parametric CAD library).
+  - Output is deterministic: same measurements always produce same model.
+
+PHASE 3: POST-PROCESSING & TEXTURES
+  - Mesh refinement: subdivision smoothing, vertex normal recalculation,
+    face-count decimation, geometric deviation validation.
+  - Texture synthesis: procedural PBR-style textures mapped to GLB meshes.
+    Four presets: Skin (light/medium/dark tones), Metallic, Plastic,
+    Carbon Fiber.
+
+PHASE 4: VISUAL OUTPUT & EXPORT
+  - Export formats:
+    * STL  — 3D printing ready
+    * STEP — Editable in any CAD software (SolidWorks, Fusion 360, etc.)
+    * GLB  — Web 3D preview (GLTF binary)
+  - Individual component GLBs (socket, forearm, hand) for inspection.
+  - Normal fixing and face color application for correct WebGL rendering.
+
+PHASE 5: UNIFIED WEB APPLICATION
+  - FastAPI backend serves everything from one URL (http://localhost:8000)
+  - Single-page app with 4 tabs:
+    Tab 1 — Measurements: Input form with sliders, number fields,
+            component toggles, sample data loading
+    Tab 2 — 3D Preview: Three.js viewer with OrbitControls, wireframe
+            toggle, auto-rotate, per-component viewing
+    Tab 3 — Textures: Material preset cards, skin tone selector,
+            one-click texture application
+    Tab 4 — Export: Download STL, STEP, GLB (untextured + textured)
+
+
+5. TECHNOLOGY STACK
+-------------------
+Language:     Python 3.11
+CAD Engine:   CadQuery (parametric solid modeling)
+Mesh:         trimesh (mesh processing, STL/GLB I/O)
+Textures:     Pillow (PIL) for procedural texture generation
+Backend:      FastAPI + Uvicorn
+Frontend:     Vanilla HTML/CSS/JS
+3D Viewer:    Three.js (WebGL)
+Validation:   Pydantic (data schemas)
+Math:         NumPy
+Testing:      pytest
+
+
+6. HOW TO RUN
+-------------
+Prerequisites:
+  - Python 3.11+ with pip
+  - CadQuery installed in virtual environment
+
+Start the web application:
+  cd "D:\Other Projects(Learning)\Hunyuan3D-2-main"
+  .venv\Scripts\python.exe -m uvicorn prosthetic_gen.interface.api:app --port 8000
+
+Then open http://localhost:8000 in your browser.
+
+Quick test without web app:
+  .venv\Scripts\python.exe diagnose_geometry.py
+  (Generates individual STL components in output/phase4_visual/)
+
+
+7. KEY DESIGN DECISIONS
+------------------------
+- Measurement-driven: No arbitrary hardcoded dimensions. Every shape
+  parameter traces back to patient data or published anatomical ratios.
+- Anatomically informed: Elliptical cross-sections (not circular),
+  ulnar ridge, dorsal palm arch, thenar eminence, joint widening.
+- Clinically exportable: STEP files are editable by any prosthetist
+  with standard CAD software before final fabrication.
+- Web-accessible: No installation required for the end user — runs
+  in any modern browser.
+- Deterministic: Same inputs always produce identical geometry,
+  enabling reproducible fittings and clinical documentation.
+
+
+8. KNOWN LIMITATIONS
+---------------------
+- This is a visualization/design proxy, not a structurally validated
+  prosthetic. Real prosthetics require FEA analysis and clinical testing.
+- Texture synthesis is procedural (not AI-generated photorealistic).
+- Hand geometry is simplified anatomical proxy — no functional grip
+  mechanism or mechanical articulation.
+- The system currently supports transradial (below-elbow) amputation
+  only. Transhumeral (above-elbow) is not yet supported.
+
+
+9. FILES OF INTEREST
+--------------------
+Main source code:
+  prosthetic_gen/parametric_engine/hand_generator.py    — Hand & thumb
+  prosthetic_gen/parametric_engine/forearm_generator.py — Forearm tube
+  prosthetic_gen/parametric_engine/socket_generator.py  — Socket shell
+  prosthetic_gen/parametric_engine/assembler.py         — Full assembly
+  prosthetic_gen/interface/api.py                       — Web API
+  prosthetic_gen/interface/webapp/index.html             — Web frontend
+
+Scripts:
+  diagnose_geometry.py       — Test each component individually
+  regenerate_arm.py          — Regenerate all models and exports
+  convert_to_glb.py          — STL to GLB conversion with textures
+
+Output:
+  output/phase4_visual/      — Generated STL, GLB, viewer HTML files
+  output/webapp/             — Per-job generated files from web app
+
+
+================================================================================
+  Built with CadQuery + FastAPI + Three.js | March 2026
+================================================================================

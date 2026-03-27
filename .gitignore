@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Output files (regenerated, not source)
+output/
+
+# Test outputs
+test_output*.txt
+demo_output*.txt
+
+# Hunyuan3D original files (not part of this project)
+hy3dgen/
+assets/
+scripts/
+textures/
+docs/
+weights/
+*.ckpt
+*.safetensors
+*.bin

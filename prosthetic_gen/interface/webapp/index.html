@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prosthetic Arm Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a2e;
+            --bg-input: #16162a;
+            --border: #2a2a4a;
+            --border-active: #6c63ff;
+            --accent: #6c63ff;
+            --accent-glow: rgba(108, 99, 255, 0.3);
+            --accent2: #00d4aa;
+            --text-primary: #f0f0ff;
+            --text-secondary: #a0a0c0;
+            --text-muted: #666688;
+            --success: #00d4aa;
+            --warning: #ffaa33;
+            --danger: #ff4466;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Header ── */
+        .header {
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        /* ── Tab Navigation ── */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            padding: 0 28px;
+        }
+
+        .tab-btn {
+            padding: 14px 24px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .tab-btn .badge {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+            font-weight: 600;
+        }
+
+        /* ── Tab Panels ── */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ── Layout ── */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            overflow-y: auto;
+            padding: 24px;
+            border-right: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        /* ── Form ── */
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            margin: 20px 0 10px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .form-group label .unit {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent);
+        }
+
+        input[type="range"] {
+            padding: 0;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        .range-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-val {
+            min-width: 44px;
+            text-align: center;
+            font-size: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 4px 6px;
+            color: var(--text-primary);
+        }
+
+        /* Toggles */
+        .toggle-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .toggle-chip {
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .toggle-chip.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 16px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: inherit;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── Viewer ── */
+        .viewer-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .viewer-toolbar-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .view-btn {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-family: inherit;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .view-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .viewer-canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #viewer-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .viewer-stats {
+            display: flex;
+            gap: 16px;
+            padding: 8px 20px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+        }
+
+        .viewer-stats span {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ── Loading ── */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(6px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 20;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-ring {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Texture Panel ── */
+        .texture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .texture-card {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .texture-card:hover {
+            border-color: var(--accent);
+        }
+
+        .texture-card.active {
+            border-color: var(--accent);
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        .texture-card .icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .texture-card .name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .texture-card .desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .tone-row {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .tone-swatch {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tone-swatch.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .tone-swatch.light {
+            background: #f5d0b0;
+        }
+
+        .tone-swatch.medium {
+            background: #c89060;
+        }
+
+        .tone-swatch.dark {
+            background: #6a4030;
+        }
+
+        /* ── Export Panel ── */
+        .export-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .export-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+        }
+
+        .export-item .file-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .export-item .file-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .export-item .file-size {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .download-btn {
+            padding: 6px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: inherit;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* ── Stats Card ── */
+        .stats-card {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            margin-top: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            z-index: 200;
+            transform: translateY(80px);
+            transition: transform 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background: var(--success);
+            color: #000;
+        }
+
+        .toast.error {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* ── No-model placeholder ── */
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 12px;
+        }
+
+        .placeholder .icon {
+            font-size: 48px;
+            opacity: 0.4;
+        }
+
+        .placeholder p {
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                max-height: 50vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1>&#129470; Prosthetic Arm <span>Generator</span></h1>
+        </div>
+        <div class="header-right">
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="status-text">Ready</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="measurements">Measurements</button>
+        <button class="tab-btn" data-tab="viewer">3D Preview<span class="badge" id="badge-viewer"
+                style="display:none">!</span></button>
+        <button class="tab-btn" data-tab="textures">Textures</button>
+        <button class="tab-btn" data-tab="export">Export</button>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TAB 1: MEASUREMENTS                            -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-panel active" id="panel-measurements">
+        <div class="app-layout">
+            <!-- Sidebar: Input Form -->
+            <div class="sidebar">
+                <div class="section-title">Limb Measurements</div>
+
+                <div class="form-group">
+                    <label>Residual Limb Length <span class="unit">mm</span></label>
+                    <input type="number" id="limb_length" value="180" min="30" max="500">
+                </div>
+
+                <div class="section-title">Circumferences (5 stations)</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>0% Proximal <span class="unit">mm</span></label>
+                        <input type="number" id="circ_prox" value="280" min="100" max="600">
+                    </div>
+                    <div class="form-group">
+                        <label>100% Distal <span class="unit">mm</span></label>
+                        <input type="number" id="circ_dist" value="160" min="20" max="350">
+                    </div>
+                </div>
+
+                <div class="section-title">Taper Profile</div>
+                <div class="form-group">
+                    <label>Taper Exponent <span class="unit">1.0 = linear</span></label>
+                    <div class="range-wrap">
+                        <input type="range" id="taper_exp" min="0.5" max="3.0" step="0.1" value="1.2">
+                        <span class="range-val" id="taper_exp_val">1.2</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Cross-section Eccentricity <span class="unit">0 = circle</span></label>
+                    <div class="range-wrap">
+                        <input type="range" id="eccentricity" min="0" max="0.15" step="0.01" value="0.1">
+                        <span class="range-val" id="eccentricity_val">0.10</span>
+                    </div>
+                </div>
+
+                <div class="section-title">Constraints</div>
+                <div class="form-group">
+                    <label>Wall Thickness <span class="unit">mm</span></label>
+                    <div class="range-wrap">
+                        <input type="range" id="wall_thick" min="2" max="10" step="0.5" value="4">
+                        <span class="range-val" id="wall_thick_val">4.0</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Forearm Length <span class="unit">mm</span></label>
+                    <div class="range-wrap">
+                        <input type="range" id="forearm_len" min="100" max="400" step="5" value="250">
+                        <span class="range-val" id="forearm_len_val">250</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Palm Width <span class="unit">mm</span></label>
+                        <input type="number" id="palm_width" value="85" min="50" max="130">
+                    </div>
+                    <div class="form-group">
+                        <label>Palm Length <span class="unit">mm</span></label>
+                        <input type="number" id="palm_length" value="100" min="60" max="150">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Finger Length <span class="unit">mm</span></label>
+                        <input type="number" id="finger_len" value="80" min="40" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label>Grip Angle <span class="unit">deg</span></label>
+                        <input type="number" id="grip_angle" value="15" min="0" max="80">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Thumb Abduction <span class="unit">deg</span></label>
+                    <div class="range-wrap">
+                        <input type="range" id="thumb_angle" min="20" max="70" step="1" value="45">
+                        <span class="range-val" id="thumb_angle_val">45</span>
+                    </div>
+                </div>
+
+                <div class="section-title">Components</div>
+                <div class="toggle-row">
+                    <button class="toggle-chip active" id="comp_socket">Socket</button>
+                    <button class="toggle-chip active" id="comp_forearm">Forearm</button>
+                    <button class="toggle-chip active" id="comp_hand">Hand</button>
+                </div>
+
+                <button class="btn-primary" id="generate-btn" onclick="generateArm()">
+                    Generate Prosthetic Arm
+                </button>
+                <button class="btn-secondary" onclick="loadSampleData()">
+                    Load Sample Data
+                </button>
+            </div>
+
+            <!-- Main: Preview or placeholder -->
+            <div class="main-panel" id="measurement-main">
+                <div class="placeholder" id="measurement-placeholder">
+                    <div class="icon">&#129470;</div>
+                    <p>Configure measurements and click <strong>Generate</strong></p>
+                    <p style="font-size:12px; color: var(--text-muted)">
+                        The 3D model will appear in the <strong>3D Preview</strong> tab
+                    </p>
+                </div>
+                <div class="stats-card" id="gen-stats"
+                    style="display:none; position:absolute; bottom:20px; left:20px; right:20px; z-index:10;">
+                    <div class="section-title" style="margin:0">Generation Result</div>
+                    <div class="stats-grid" id="stats-grid"></div>
+                </div>
+                <div class="loading-overlay" id="gen-loading">
+                    <div class="loading-ring"></div>
+                    <div class="loading-text">Generating geometry...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TAB 2: 3D VIEWER                               -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-viewer">
+        <div class="app-layout" style="grid-template-columns: 1fr;">
+            <div class="main-panel">
+                <div class="viewer-toolbar">
+                    <div class="viewer-toolbar-group" id="model-btns">
+                        <button class="view-btn active" data-view="assembly">Assembly</button>
+                        <button class="view-btn" data-view="socket">Socket</button>
+                        <button class="view-btn" data-view="forearm">Forearm</button>
+                        <button class="view-btn" data-view="hand">Hand</button>
+                    </div>
+                    <div class="viewer-toolbar-group">
+                        <button class="view-btn" onclick="toggleWireframe()">Wireframe</button>
+                        <button class="view-btn" onclick="toggleAutoRotate()">Auto-Rotate</button>
+                        <button class="view-btn" onclick="resetCamera()">Reset View</button>
+                    </div>
+                </div>
+                <div class="viewer-canvas-container">
+                    <canvas id="viewer-canvas"></canvas>
+                    <div class="placeholder" id="viewer-placeholder">
+                        <div class="icon">&#128065;</div>
+                        <p>No model generated yet</p>
+                        <p style="font-size:12px; color: var(--text-muted)">
+                            Go to <strong>Measurements</strong> tab and generate first
+                        </p>
+                    </div>
+                    <div class="loading-overlay" id="viewer-loading">
+                        <div class="loading-ring"></div>
+                        <div class="loading-text">Loading model...</div>
+                    </div>
+                </div>
+                <div class="viewer-stats" id="viewer-stats-bar">
+                    <div>Vertices: <span id="stat-verts">-</span></div>
+                    <div>Faces: <span id="stat-faces">-</span></div>
+                    <div>Dimensions: <span id="stat-dims">-</span></div>
+                    <div>Volume: <span id="stat-volume">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TAB 3: TEXTURES                                -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-textures">
+        <div class="app-layout">
+            <div class="sidebar">
+                <div class="section-title">Material Preset</div>
+                <div class="texture-grid">
+                    <div class="texture-card active" data-material="skin" onclick="selectMaterial(this)">
+                        <div class="icon">&#129507;</div>
+                        <div class="name">Skin</div>
+                        <div class="desc">Realistic skin texture</div>
+                    </div>
+                    <div class="texture-card" data-material="metallic" onclick="selectMaterial(this)">
+                        <div class="icon">&#9881;</div>
+                        <div class="name">Metallic</div>
+                        <div class="desc">Brushed metal finish</div>
+                    </div>
+                    <div class="texture-card" data-material="plastic" onclick="selectMaterial(this)">
+                        <div class="icon">&#128308;</div>
+                        <div class="name">Plastic</div>
+                        <div class="desc">Smooth polymer</div>
+                    </div>
+                    <div class="texture-card" data-material="carbon_fiber" onclick="selectMaterial(this)">
+                        <div class="icon">&#9670;</div>
+                        <div class="name">Carbon Fiber</div>
+                        <div class="desc">Woven composite</div>
+                    </div>
+                </div>
+
+                <div class="section-title">Skin Tone</div>
+                <div class="tone-row">
+                    <div class="tone-swatch light" data-tone="light" onclick="selectTone(this)"></div>
+                    <div class="tone-swatch medium active" data-tone="medium" onclick="selectTone(this)"></div>
+                    <div class="tone-swatch dark" data-tone="dark" onclick="selectTone(this)"></div>
+                </div>
+
+                <button class="btn-primary" id="texture-btn" onclick="applyTexture()" disabled>
+                    Apply Texture
+                </button>
+                <p style="margin-top:8px; font-size:11px; color: var(--text-muted);">
+                    Generate a model first, then apply textures.
+                </p>
+            </div>
+            <div class="main-panel" id="texture-preview">
+                <div class="placeholder">
+                    <div class="icon">&#127912;</div>
+                    <p>Apply a texture to see preview</p>
+                </div>
+                <div class="loading-overlay" id="texture-loading">
+                    <div class="loading-ring"></div>
+                    <div class="loading-text">Applying texture...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TAB 4: EXPORT                                  -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-export">
+        <div class="app-layout">
+            <div class="sidebar">
+                <div class="section-title">Available Downloads</div>
+                <div class="export-list" id="export-list">
+                    <div style="color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center;">
+                        No files generated yet. Go to Measurements tab to generate.
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top:24px">Generation Info</div>
+                <div class="stats-card" id="export-stats">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Job ID</div>
+                            <div class="stat-value" id="export-job-id">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Components</div>
+                            <div class="stat-value" id="export-components">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Faces</div>
+                            <div class="stat-value" id="export-faces">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Watertight</div>
+                            <div class="stat-value" id="export-watertight">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="main-panel">
+                <div class="placeholder">
+                    <div class="icon">&#128230;</div>
+                    <p>Download STL, STEP, and GLB files</p>
+                    <p style="font-size:12px; color: var(--text-muted);">
+                        Generated files appear here after model generation
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- Three.js + App Logic                           -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // ── State ──
+        let currentJobId = null;
+        let currentFiles = {};
+        let currentStats = {};
+        let scene, camera, renderer, controls;
+        let currentModel = null;
+        let wireframeMode = false;
+        const loader = new GLTFLoader();
+
+        // ── Three.js Viewer Setup ──
+        function initViewer() {
+            const canvas = document.getElementById('viewer-canvas');
+            if (!canvas) return;
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0d0d14);
+
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
+            camera.position.set(200, 150, 400);
+
+            controls = new OrbitControls(camera, canvas);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = false;
+            controls.autoRotateSpeed = 1.5;
+
+            // Lights — boosted to overcome dark vertex color issue
+            scene.add(new THREE.AmbientLight(0xffffff, 5.0));
+            const d1 = new THREE.DirectionalLight(0xffffff, 4.0);
+            d1.position.set(300, 500, 300); scene.add(d1);
+            const d2 = new THREE.DirectionalLight(0xffffff, 3.0);
+            d2.position.set(-300, 200, -200); scene.add(d2);
+            const d3 = new THREE.DirectionalLight(0xffeedd, 2.0);
+            d3.position.set(0, -200, 300); scene.add(d3);
+            const d4 = new THREE.DirectionalLight(0xffffff, 3.0);
+            d4.position.set(0, 0, -400); scene.add(d4);
+            scene.add(new THREE.HemisphereLight(0xffffff, 0x88aaff, 2.0));
+
+            // Grid
+            const grid = new THREE.GridHelper(600, 30, 0x222244, 0x1a1a33);
+            grid.position.y = -10; scene.add(grid);
+
+            resizeViewer();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', resizeViewer);
+        }
+
+        function resizeViewer() {
+            const container = document.querySelector('.viewer-canvas-container');
+            if (!container || !renderer) return;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            if (w > 0 && h > 0) {
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            }
+        }
+
+        function loadModel(url) {
+            if (!scene) initViewer();
+
+            // Clear current model
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel.traverse(child => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                        else child.material.dispose();
+                    }
+                });
+                currentModel = null;
+            }
+
+            document.getElementById('viewer-loading').classList.add('show');
+            document.getElementById('viewer-placeholder').style.display = 'none';
+
+            loader.load(url, (gltf) => {
+                currentModel = gltf.scene;
+
+                const box = new THREE.Box3().setFromObject(currentModel);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                currentModel.position.sub(center);
+
+                // Apply material — strip vertex colors from geometry first
+                // trimesh embeds near-black face colors in GLB; removing them
+                // prevents them from overriding our material color
+                currentModel.traverse(child => {
+                    if (child.isMesh) {
+                        // Delete embedded vertex color attribute so our material color shows
+                        if (child.geometry && child.geometry.attributes.color) {
+                            child.geometry.deleteAttribute('color');
+                        }
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: 0xe8c8a8,   // warm skin/prosthetic tone
+                            roughness: 0.65,
+                            metalness: 0.05,
+                            side: THREE.DoubleSide,
+                            wireframe: wireframeMode,
+                        });
+                        child.material.needsUpdate = true;
+                    }
+                });
+
+                scene.add(currentModel);
+                controls.target.set(0, 0, 0);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(maxDim * 0.8, maxDim * 0.6, maxDim * 1.2);
+                controls.update();
+
+                // Update stats bar
+                document.getElementById('stat-dims').textContent =
+                    `${size.x.toFixed(0)} x ${size.y.toFixed(0)} x ${size.z.toFixed(0)} mm`;
+
+                document.getElementById('viewer-loading').classList.remove('show');
+                resizeViewer();
+            }, undefined, (err) => {
+                console.error('Load error:', err);
+                document.getElementById('viewer-loading').classList.remove('show');
+                showToast('Failed to load model', 'error');
+            });
+        }
+
+        // Expose controls to global scope
+        window.toggleWireframe = () => {
+            wireframeMode = !wireframeMode;
+            if (currentModel) {
+                currentModel.traverse(c => { if (c.isMesh) c.material.wireframe = wireframeMode; });
+            }
+        };
+        window.toggleAutoRotate = () => {
+            if (controls) controls.autoRotate = !controls.autoRotate;
+        };
+        window.resetCamera = () => {
+            if (camera && controls) {
+                camera.position.set(200, 150, 400);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        };
+
+        // ── Tab Navigation ──
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+
+                if (btn.dataset.tab === 'viewer') {
+                    setTimeout(() => {
+                        if (!scene) initViewer();
+                        resizeViewer();
+                        if (currentFiles.glb && !currentModel) {
+                            loadModel(currentFiles.glb);
+                        }
+                    }, 100);
+                }
+            });
+        });
+
+        // ── Range Sliders ──
+        document.querySelectorAll('input[type="range"]').forEach(range => {
+            const valSpan = document.getElementById(range.id + '_val');
+            if (valSpan) {
+                range.addEventListener('input', () => {
+                    valSpan.textContent = parseFloat(range.value).toFixed(
+                        range.step.includes('.') ? range.step.split('.')[1].length : 0
+                    );
+                });
+            }
+        });
+
+        // ── Component Toggles ──
+        document.querySelectorAll('.toggle-chip').forEach(chip => {
+            chip.addEventListener('click', () => chip.classList.toggle('active'));
+        });
+
+        // ── Model View Buttons ──
+        document.querySelectorAll('#model-btns .view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#model-btns .view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const view = btn.dataset.view;
+                let url;
+                if (view === 'assembly') url = currentFiles.glb;
+                else url = currentFiles[`${view}_glb`];
+
+                if (url) loadModel(url);
+                else showToast(`${view} component not available`, 'error');
+            });
+        });
+
+        // ── Generate ──
+        window.generateArm = async function () {
+            const btn = document.getElementById('generate-btn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            document.getElementById('gen-loading').classList.add('show');
+            document.getElementById('status-text').textContent = 'Generating...';
+
+            const body = {
+                residual_limb_length: +document.getElementById('limb_length').value,
+                circumference_proximal: +document.getElementById('circ_prox').value,
+                circumference_distal: +document.getElementById('circ_dist').value,
+                taper_exponent: +document.getElementById('taper_exp').value,
+                eccentricity: +document.getElementById('eccentricity').value,
+                wall_thickness: +document.getElementById('wall_thick').value,
+                forearm_length: +document.getElementById('forearm_len').value,
+                palm_width: +document.getElementById('palm_width').value,
+                palm_length: +document.getElementById('palm_length').value,
+                finger_length: +document.getElementById('finger_len').value,
+                grip_angle: +document.getElementById('grip_angle').value,
+                thumb_angle: +document.getElementById('thumb_angle').value,
+                generate_socket: document.getElementById('comp_socket').classList.contains('active'),
+                generate_forearm: document.getElementById('comp_forearm').classList.contains('active'),
+                generate_hand: document.getElementById('comp_hand').classList.contains('active'),
+            };
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.detail || 'Generation failed');
+
+                currentJobId = data.job_id;
+                currentFiles = data.files;
+                currentStats = data.stats;
+
+                // Update stats display
+                updateStats(data.stats, data.job_id);
+
+                // Enable texture button
+                document.getElementById('texture-btn').disabled = false;
+
+                // Update export panel
+                updateExportPanel(data.files, data.stats, data.job_id);
+
+                // Flash badge on viewer tab
+                document.getElementById('badge-viewer').style.display = 'inline';
+
+                document.getElementById('status-text').textContent = 'Model Ready';
+                showToast('Model generated successfully!', 'success');
+
+                // Auto-switch to viewer
+                document.querySelector('[data-tab="viewer"]').click();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+                document.getElementById('status-text').textContent = 'Error';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Prosthetic Arm';
+                document.getElementById('gen-loading').classList.remove('show');
+            }
+        };
+
+        // ── Texture ──
+        window.selectMaterial = function (el) {
+            document.querySelectorAll('.texture-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        };
+        window.selectTone = function (el) {
+            document.querySelectorAll('.tone-swatch').forEach(s => s.classList.remove('active'));
+            el.classList.add('active');
+        };
+
+        window.applyTexture = async function () {
+            if (!currentJobId) { showToast('Generate a model first', 'error'); return; }
+
+            const material = document.querySelector('.texture-card.active').dataset.material;
+            const tone = document.querySelector('.tone-swatch.active').dataset.tone;
+
+            document.getElementById('texture-loading').classList.add('show');
+            document.getElementById('texture-btn').disabled = true;
+
+            try {
+                const res = await fetch('/api/texture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_id: currentJobId, material_preset: material, skin_tone: tone }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Texture failed');
+
+                // Merge new files
+                Object.assign(currentFiles, data.files);
+                updateExportPanel(currentFiles, currentStats, currentJobId);
+
+                // Load textured model in viewer
+                const texUrl = data.files[`glb_${material}`];
+                if (texUrl) {
+                    loadModel(texUrl);
+                    document.querySelector('[data-tab="viewer"]').click();
+                }
+
+                showToast(`${material} texture applied!`, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                document.getElementById('texture-loading').classList.remove('show');
+                document.getElementById('texture-btn').disabled = false;
+            }
+        };
+
+        // ── Load Sample ──
+        window.loadSampleData = function () {
+            document.getElementById('limb_length').value = 180;
+            document.getElementById('circ_prox').value = 280;
+            document.getElementById('circ_dist').value = 160;
+            document.getElementById('taper_exp').value = 1.2;
+            document.getElementById('taper_exp_val').textContent = '1.2';
+            document.getElementById('eccentricity').value = 0.1;
+            document.getElementById('eccentricity_val').textContent = '0.10';
+            document.getElementById('wall_thick').value = 4;
+            document.getElementById('wall_thick_val').textContent = '4.0';
+            document.getElementById('forearm_len').value = 250;
+            document.getElementById('forearm_len_val').textContent = '250';
+            document.getElementById('palm_width').value = 85;
+            document.getElementById('palm_length').value = 100;
+            document.getElementById('finger_len').value = 80;
+            document.getElementById('grip_angle').value = 15;
+            document.getElementById('thumb_angle').value = 45;
+            document.getElementById('thumb_angle_val').textContent = '45';
+            showToast('Sample data loaded', 'success');
+        };
+
+        // ── Helpers ──
+        function updateStats(stats, jobId) {
+            const grid = document.getElementById('stats-grid');
+            document.getElementById('gen-stats').style.display = 'block';
+            document.getElementById('measurement-placeholder').style.display = 'none';
+
+            const bb = stats.bounding_box;
+            const dims = bb ? `${(bb.max[0] - bb.min[0]).toFixed(0)} x ${(bb.max[1] - bb.min[1]).toFixed(0)} x ${(bb.max[2] - bb.min[2]).toFixed(0)} mm` : '-';
+
+            grid.innerHTML = `
+        <div class="stat-item"><div class="stat-label">Job ID</div><div class="stat-value">${jobId}</div></div>
+        <div class="stat-item"><div class="stat-label">Components</div><div class="stat-value">${(stats.components || []).join(', ')}</div></div>
+        <div class="stat-item"><div class="stat-label">Faces</div><div class="stat-value">${(stats.faces || 0).toLocaleString()}</div></div>
+        <div class="stat-item"><div class="stat-label">Vertices</div><div class="stat-value">${(stats.vertices || 0).toLocaleString()}</div></div>
+        <div class="stat-item"><div class="stat-label">Dimensions</div><div class="stat-value">${dims}</div></div>
+        <div class="stat-item"><div class="stat-label">Watertight</div><div class="stat-value">${stats.watertight ? 'Yes' : 'No'}</div></div>
+    `;
+
+            // Update viewer stats
+            document.getElementById('stat-verts').textContent = (stats.vertices || 0).toLocaleString();
+            document.getElementById('stat-faces').textContent = (stats.faces || 0).toLocaleString();
+            document.getElementById('stat-dims').textContent = dims;
+            document.getElementById('stat-volume').textContent = stats.volume_mm3 ? `${(stats.volume_mm3 / 1000).toFixed(1)} cm3` : '-';
+        }
+
+        function updateExportPanel(files, stats, jobId) {
+            document.getElementById('export-job-id').textContent = jobId || '-';
+            document.getElementById('export-components').textContent = (stats.components || []).join(', ') || '-';
+            document.getElementById('export-faces').textContent = (stats.faces || 0).toLocaleString();
+            document.getElementById('export-watertight').textContent = stats.watertight ? 'Yes' : 'No';
+
+            const list = document.getElementById('export-list');
+            const labels = {
+                step: ['STEP File', 'Parametric CAD (editable)'],
+                stl: ['STL Mesh', 'For 3D printing'],
+                glb: ['GLB Model', 'Web 3D preview'],
+                glb_skin: ['GLB + Skin', 'Skin-tone texture'],
+                glb_metallic: ['GLB + Metallic', 'Metallic texture'],
+                glb_plastic: ['GLB + Plastic', 'Plastic texture'],
+                glb_carbon_fiber: ['GLB + Carbon', 'Carbon fiber texture'],
+                socket_glb: ['Socket.glb', 'Socket component'],
+                forearm_glb: ['Forearm.glb', 'Forearm component'],
+                hand_glb: ['Hand.glb', 'Hand component'],
+            };
+
+            let html = '';
+            for (const [key, url] of Object.entries(files)) {
+                const [name, desc] = labels[key] || [key, ''];
+                html += `
+            <div class="export-item">
+                <div class="file-info">
+                    <div class="file-name">${name}</div>
+                    <div class="file-size">${desc}</div>
+                </div>
+                <a href="${url}" download class="download-btn">Download</a>
+            </div>
+        `;
+            }
+            list.innerHTML = html || '<div style="color: var(--text-muted); text-align:center; padding:20px;">No files yet</div>';
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Init viewer on page load (deferred)
+        initViewer();
+    </script>
+</body>
+
+</html>
